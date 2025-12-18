@@ -12,9 +12,7 @@ import android.telephony.TelephonyManager
 import java.io.File
 
 class OpusAudioRecorder constructor(
-    ctx: Context,
-    private val recordingAudioFile: File,
-    private val callback: Callback? = null
+    ctx: Context, private val recordingAudioFile: File, private val callback: Callback? = null
 ) {
     companion object {
         private const val SAMPLE_RATE = 16000
@@ -24,7 +22,7 @@ class OpusAudioRecorder constructor(
         const val STATE_IDLE = 1
         const val STATE_RECORDING = 2
 
-        private const val MAX_RECORD_DURATION = 60000
+        private const val MAX_RECORD_DURATION = 60000 * 60 * 3
 
         var state: Int = STATE_NOT_INIT
 
@@ -41,9 +39,7 @@ class OpusAudioRecorder constructor(
     private var audioRecord: AudioRecord? = null
 
     private var recordBufferSize: Int = AudioRecord.getMinBufferSize(
-        SAMPLE_RATE,
-        AudioFormat.CHANNEL_IN_MONO,
-        AudioFormat.ENCODING_PCM_16BIT
+        SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
     )
 
     private val recordSamples = ShortArray(1024)
@@ -75,8 +71,9 @@ class OpusAudioRecorder constructor(
                     }
                 }
             }
-            (ctx.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?)
-                ?.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE)
+            (ctx.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?)?.listen(
+                phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE
+            )
         } catch (ignore: Exception) {
         }
     }
@@ -130,8 +127,7 @@ class OpusAudioRecorder constructor(
                             if (recordTimeCount >= MAX_RECORD_DURATION) {
                                 stopRecording(AudioEndStatus.SEND)
                             }
-                        }
-                    )
+                        })
                     recordQueue.postRunnable(recordRunnable)
                 } else {
                     stopRecordingInternal(
@@ -217,8 +213,7 @@ class OpusAudioRecorder constructor(
                     }
                     stopRecordingInternal(endStatus)
                 }
-            }
-        )
+            })
     }
 
     fun stop() {
@@ -237,20 +232,15 @@ class OpusAudioRecorder constructor(
                     Handler(Looper.getMainLooper()).post {
                         if (endStatus == AudioEndStatus.SEND) {
                             callback?.sendAudio(
-                                recordingAudioFile,
-                                duration,
-                                waveForm
+                                recordingAudioFile, duration, waveForm
                             )
                         } else if (endStatus == AudioEndStatus.PREVIEW) {
                             callback?.sendAudio(
-                                recordingAudioFile,
-                                duration,
-                                waveForm
+                                recordingAudioFile, duration, waveForm
                             )
                         }
                     }
-                }
-            )
+                })
         }
         state = STATE_IDLE
         try {
